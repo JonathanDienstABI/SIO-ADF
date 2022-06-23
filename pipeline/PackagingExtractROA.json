@@ -1,0 +1,92 @@
+{
+	"name": "PackagingExtractROA",
+	"properties": {
+		"activities": [
+			{
+				"name": "Lookup MMIS DBs",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlServerSource",
+						"sqlReaderQuery": {
+							"value": "SELECT name as TName\nFrom \nmaster.sys.databases\nWhere name like 'MMIS_%'\nand name <> 'MMIS_HUB'\nand name <> 'MMIS_NG_Old'\nand name <> 'MMIS_SA'\nand name <> 'MMIS_SD'\nand name <> 'MMIS_MW'\nand name <> 'MMIS_ZW'",
+							"type": "Expression"
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "MMISTables",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "ForEach1",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Lookup MMIS DBs",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Lookup MMIS DBs').output.value",
+						"type": "Expression"
+					},
+					"isSequential": true,
+					"activities": [
+						{
+							"name": "Execute ROA Child",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "Packaging Extract ROA Child",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"DBName": {
+										"value": "@item().TName",
+										"type": "Expression"
+									},
+									"PackDateRange": {
+										"value": "@pipeline().parameters.PackDateRange",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"PackDateRange": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "Packaging ETL"
+		},
+		"annotations": [],
+		"lastPublishTime": "2021-07-29T09:13:30Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

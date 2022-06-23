@@ -1,0 +1,46 @@
+{
+	"name": "FactsETL1-df",
+	"properties": {
+		"description": "Staging table load process",
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "SDLeversOut",
+						"type": "DatasetReference"
+					},
+					"name": "SDLeversOut"
+				},
+				{
+					"dataset": {
+						"referenceName": "vwDateAdjustLookup",
+						"type": "DatasetReference"
+					},
+					"name": "vwDateAdjustLookup"
+				}
+			],
+			"sinks": [
+				{
+					"name": "snkDateAdjust"
+				},
+				{
+					"dataset": {
+						"referenceName": "ODSStaging2",
+						"type": "DatasetReference"
+					},
+					"name": "StagingSink"
+				}
+			],
+			"transformations": [
+				{
+					"name": "DerivedColumn1"
+				},
+				{
+					"name": "SurrogateKey1"
+				}
+			],
+			"script": "parameters{\n\tLoadBatch as string ('2')\n}\nsource(output(\n\t\tSourceKey as long,\n\t\tBrewName as string,\n\t\tDateStarting as date,\n\t\tLastUpdated_Source as date,\n\t\tTimeLine as string,\n\t\tSection as string,\n\t\tFlowMeasure as string,\n\t\tArea as string,\n\t\tUOM as string,\n\t\tValue as double,\n\t\tLastUpdated as timestamp,\n\t\tPeriodDate as date,\n\t\tBatch as integer\n\t),\n\tallowSchemaDrift: false,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tquery: (\"SELECT * FROM dbo.vwSD_Levers_Output WHERE Batch = \" + $LoadBatch),\n\tformat: 'query') ~> SDLeversOut\nsource(output(\n\t\tSiteName as string,\n\t\tDateAdjust as integer\n\t),\n\tallowSchemaDrift: false,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table') ~> vwDateAdjustLookup\nSDLeversOut derive(DateAdjust = snkDateAdjust#lookup(BrewName).DateAdjust,\n\t\tLastUpdated1 = currentDate(),\n\t\tTimeLine_tr = trim(TimeLine)) ~> DerivedColumn1\nDerivedColumn1 keyGenerate(output(pkiSDLevers as long),\n\tstartAt: 1L,\n\tstepValue: 1L) ~> SurrogateKey1\nvwDateAdjustLookup sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tkeys:['SiteName'],\n\tstore: 'cache',\n\tformat: 'inline',\n\toutput: false,\n\tsaveOrder: 1,\n\tmapColumn(\n\t\tSiteName,\n\t\tDateAdjust\n\t)) ~> snkDateAdjust\nSurrogateKey1 sink(allowSchemaDrift: false,\n\tvalidateSchema: false,\n\tinput(\n\t\tpkiSDLevers as long,\n\t\tBrewName as string,\n\t\tDateStarting as date,\n\t\tLastUpdated_Source as timestamp,\n\t\tTimeLine as string,\n\t\tSection as string,\n\t\tFlowMeasure as string,\n\t\tArea as string,\n\t\tUOM as string,\n\t\tValue as double,\n\t\tfkBatchID as integer,\n\t\tLastUpdated as timestamp,\n\t\tLastUpdatedBy as string,\n\t\tSourceLine as long,\n\t\tPeriodDate as date,\n\t\tPeriodAdjust as integer\n\t),\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\ttruncate:true,\n\tformat: 'table',\n\tdateFormat:'yyyy/MM/dd',\n\ttimestampFormat:'yyyy/MM/dd hh:mm:ss',\n\terrorHandlingOption: 'stopOnFirstError',\n\tmapColumn(\n\t\tpkiSDLevers,\n\t\tBrewName,\n\t\tDateStarting,\n\t\tLastUpdated_Source,\n\t\tTimeLine,\n\t\tSection,\n\t\tFlowMeasure,\n\t\tArea,\n\t\tUOM,\n\t\tValue,\n\t\tfkBatchID = Batch,\n\t\tLastUpdated,\n\t\tSourceLine = SourceKey,\n\t\tPeriodDate,\n\t\tPeriodAdjust = DateAdjust\n\t)) ~> StagingSink"
+		}
+	}
+}

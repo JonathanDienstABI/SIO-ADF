@@ -1,0 +1,175 @@
+{
+	"name": "Packaging Extract ROA Child_Backfill",
+	"properties": {
+		"description": "Child pipeline for loop in ROA extract ",
+		"activities": [
+			{
+				"name": "Copy ROA Data",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "LookupMapping_ROA",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlServerSource",
+						"sqlReaderStoredProcedureName": "dbo.cc_PE_MTD_GLY",
+						"storedProcedureParameters": {
+							"FRDT": {
+								"type": "Datetime",
+								"value": {
+									"value": "@pipeline().parameters.FromDate",
+									"type": "Expression"
+								}
+							},
+							"TODT": {
+								"type": "Datetime",
+								"value": {
+									"value": "@pipeline().parameters.ToDate",
+									"type": "Expression"
+								}
+							}
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "AzureSqlSink",
+						"writeBehavior": "insert"
+					},
+					"enableStaging": false,
+					"translator": {
+						"value": "@json(activity('LookupMapping_ROA').output.firstRow.json_output)",
+						"type": "Expression"
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "DS_MMIS_ROA_Dynamic",
+						"type": "DatasetReference",
+						"parameters": {
+							"pDBName": {
+								"value": "@pipeline().parameters.DBName",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "PackLanding",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "LookupMapping_ROA",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderStoredProcedureName": "[REF].[spADF_DynamicColumnMapping]",
+						"storedProcedureParameters": {
+							"schema_name": {
+								"type": "String",
+								"value": "ODS"
+							},
+							"table_name": {
+								"type": "String",
+								"value": "PackStaging"
+							}
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "dsLookupMapping",
+						"type": "DatasetReference"
+					}
+				}
+			},
+			{
+				"name": "Update MMIS SiteRef",
+				"description": "Deduplicate site ref across MMIS instances",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "Copy ROA Data",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "ODS.spUpdateMMIS_SiteRef",
+					"storedProcedureParameters": {
+						"dbName": {
+							"value": {
+								"value": "@pipeline().parameters.DBName",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"target": {
+							"value": {
+								"value": "ODS.PackStaging",
+								"type": "Expression"
+							},
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "supplydatastore_server",
+					"type": "LinkedServiceReference"
+				}
+			}
+		],
+		"parameters": {
+			"DBName": {
+				"type": "string"
+			},
+			"FromDate": {
+				"type": "string"
+			},
+			"ToDate": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "Packaging ETL"
+		},
+		"annotations": [],
+		"lastPublishTime": "2021-07-29T09:13:28Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

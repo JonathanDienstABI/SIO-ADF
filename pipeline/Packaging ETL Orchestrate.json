@@ -1,0 +1,220 @@
+{
+	"name": "Packaging ETL Orchestrate",
+	"properties": {
+		"description": "Batch and last updated",
+		"activities": [
+			{
+				"name": "Packaging ROA ETL1",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Purge Pack Staging A",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PackagingExtractROA",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"PackDateRange": {
+							"value": "@variables('vPackDateRange')",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "Packaging SA ETL1",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Purge Pack Staging A",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PackagingExtractSA",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"PackDateRange": {
+							"value": "@variables('vPackDateRange')",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "Purge Pack Staging A",
+				"description": "Purge Staging File",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "Set Date Range",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[ODS].[spPurgePackStaging]"
+				},
+				"linkedServiceName": {
+					"referenceName": "supplydatastore_server",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "Update BatchID",
+				"description": "Update and return BatchID",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "UpdatePackaging",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderStoredProcedureName": "[ODS].[spPackAudit]",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "GenericDataStore",
+						"type": "DatasetReference"
+					}
+				}
+			},
+			{
+				"name": "Packaging ETL2 - KPI",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Update BatchID",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "Packaging KPI ETL2",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "Packaging ETL2 - Hierarchy",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Update BatchID",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "Packaging Hierarchy ETL2",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": false
+				}
+			},
+			{
+				"name": "Set Date Range",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "vPackDateRange",
+					"value": {
+						"value": "30",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "UpdatePackaging",
+				"description": "Copy from SAD/SAW/SAM tables to main staging",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "Packaging ROA ETL1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "Packaging SA ETL1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "ODS.spPackagingCombine_SA"
+				},
+				"linkedServiceName": {
+					"referenceName": "supplydatastore_server",
+					"type": "LinkedServiceReference"
+				}
+			}
+		],
+		"variables": {
+			"vPackDateRange": {
+				"type": "String",
+				"defaultValue": "30"
+			}
+		},
+		"folder": {
+			"name": "Packaging ETL"
+		},
+		"annotations": [],
+		"lastPublishTime": "2021-07-29T09:13:31Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

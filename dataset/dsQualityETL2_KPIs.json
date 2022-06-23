@@ -1,0 +1,71 @@
+{
+	"name": "dsQualityETL2_KPIs",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "supplydatastore_server",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "Quality ETL"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "fkSite",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "fkLocation",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "fkDomain",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "fkMetric",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "fkTimeLine",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "fkDate",
+				"type": "date"
+			},
+			{
+				"name": "Value",
+				"type": "float",
+				"precision": 15
+			},
+			{
+				"name": "fkBatch",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "LastUpdated",
+				"type": "datetime",
+				"precision": 23,
+				"scale": 3
+			},
+			{
+				"name": "pkiFactKPI",
+				"type": "bigint",
+				"precision": 19
+			}
+		],
+		"typeProperties": {
+			"schema": "ODS",
+			"table": "vwQualityETL2_KPIs"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

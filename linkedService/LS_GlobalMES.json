@@ -1,0 +1,15 @@
+{
+	"name": "LS_GlobalMES",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "SqlServer",
+		"typeProperties": {
+			"connectionString": "integrated security=False;data source=ONEAZRAP3328.ONE.OFC.LOC;initial catalog=EDB_ABI_GLOBAL;user id=AFRREPPRD"
+		},
+		"connectVia": {
+			"referenceName": "OnPremise",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

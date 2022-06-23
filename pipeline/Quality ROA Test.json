@@ -1,0 +1,119 @@
+{
+	"name": "Quality ROA Test",
+	"properties": {
+		"activities": [
+			{
+				"name": "Copy data1",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "LookupMapping_ROA",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlServerSource",
+						"sqlReaderStoredProcedureName": "dbo.cc_PE_MTD_GLY",
+						"storedProcedureParameters": {
+							"FRDT": {
+								"type": "DateTime",
+								"value": {
+									"value": "@getPastTime(int(variables('LoadDays')),'Day')",
+									"type": "Expression"
+								}
+							},
+							"TODT": {
+								"type": "DateTime",
+								"value": {
+									"value": "@utcnow()",
+									"type": "Expression"
+								}
+							}
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "AzureSqlSink",
+						"writeBehavior": "insert"
+					},
+					"enableStaging": false,
+					"translator": {
+						"value": "@json(activity('LookupMapping_ROA').output.firstRow.json_output)",
+						"type": "Expression"
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "PackagingROA_Static",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "PackLanding",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "LookupMapping_ROA",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderStoredProcedureName": "[REF].[spADF_DynamicColumnMapping]",
+						"storedProcedureParameters": {
+							"schema_name": {
+								"type": "String",
+								"value": "ODS"
+							},
+							"table_name": {
+								"type": "String",
+								"value": "PackTest"
+							}
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "dsLookupMapping",
+						"type": "DatasetReference"
+					}
+				}
+			}
+		],
+		"variables": {
+			"LoadDays": {
+				"type": "String",
+				"defaultValue": "30"
+			}
+		},
+		"folder": {
+			"name": "Quality ETL"
+		},
+		"annotations": [],
+		"lastPublishTime": "2021-07-29T09:13:30Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

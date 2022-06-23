@@ -1,0 +1,21 @@
+{
+	"name": "LS_MMIS",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"parameters": {
+			"DBName": {
+				"type": "string",
+				"defaultValue": "MMIS_MZ"
+			}
+		},
+		"annotations": [],
+		"type": "SqlServer",
+		"typeProperties": {
+			"connectionString": "integrated security=False;data source=braas004.sabmaa.africa.gcn.local\\\\SQL2;initial catalog=@{linkedService().DBName};user id=MMIS"
+		},
+		"connectVia": {
+			"referenceName": "OnPremise",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

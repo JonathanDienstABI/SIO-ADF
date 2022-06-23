@@ -1,0 +1,88 @@
+{
+	"name": "QualityExtractTraksys",
+	"properties": {
+		"activities": [
+			{
+				"name": "Lookup Traksys Sites",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "RefTraksysSites",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "ForEach1",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Lookup Traksys Sites",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Lookup Traksys Sites').output.value",
+						"type": "Expression"
+					},
+					"isSequential": false,
+					"activities": [
+						{
+							"name": "Execute Traksys Child",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "Quality Extract Traksys Child",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"SiteCode": {
+										"value": "@item().SiteCode",
+										"type": "Expression"
+									},
+									"ExtractDateRange": {
+										"value": "@pipeline().parameters.ExtractDateRange",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"ExtractDateRange": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "Quality ETL"
+		},
+		"annotations": [],
+		"lastPublishTime": "2021-07-29T09:13:29Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

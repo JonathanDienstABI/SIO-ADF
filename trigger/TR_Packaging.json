@@ -1,0 +1,24 @@
+{
+	"name": "TR_Packaging",
+	"properties": {
+		"annotations": [],
+		"runtimeState": "Stopped",
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "Packaging ETL Orchestrate",
+					"type": "PipelineReference"
+				}
+			}
+		],
+		"type": "ScheduleTrigger",
+		"typeProperties": {
+			"recurrence": {
+				"frequency": "Day",
+				"interval": 1,
+				"startTime": "2021-06-23T01:33:00Z",
+				"timeZone": "UTC"
+			}
+		}
+	}
+}

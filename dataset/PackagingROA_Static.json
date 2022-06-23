@@ -1,0 +1,16 @@
+{
+	"name": "PackagingROA_Static",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_Packaging_Static",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "Packaging Efficiency ETL"
+		},
+		"annotations": [],
+		"type": "SqlServerTable",
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

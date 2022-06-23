@@ -1,0 +1,34 @@
+{
+	"name": "RefTraksysSites",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "supplydatastore_server",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "Quality ETL"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "SiteName",
+				"type": "varchar"
+			},
+			{
+				"name": "SiteCode",
+				"type": "varchar"
+			},
+			{
+				"name": "fkSite",
+				"type": "bigint",
+				"precision": 19
+			}
+		],
+		"typeProperties": {
+			"schema": "REF",
+			"table": "TraksysSiteCodes"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

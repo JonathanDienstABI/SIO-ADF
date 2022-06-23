@@ -1,0 +1,97 @@
+{
+	"name": "rsQualitySink_Phys",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "supplydatastore_server",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "Quality ETL"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "pkID",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "ODSBreweryCode",
+				"type": "varchar"
+			},
+			{
+				"name": "FYEAR",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "FMONTH",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "FWEEK",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "FDAY",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "DEPARTMENT",
+				"type": "varchar"
+			},
+			{
+				"name": "PROCESS_AREA",
+				"type": "varchar"
+			},
+			{
+				"name": "PARAMETER",
+				"type": "varchar"
+			},
+			{
+				"name": "ORDER_NUMBER",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "IN_SPEC",
+				"type": "float",
+				"precision": 15
+			},
+			{
+				"name": "OPPORTUNITIES",
+				"type": "float",
+				"precision": 15
+			},
+			{
+				"name": "Value",
+				"type": "float",
+				"precision": 15
+			},
+			{
+				"name": "Domain",
+				"type": "varchar"
+			},
+			{
+				"name": "fkBatch",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "LastUpdated",
+				"type": "datetime",
+				"precision": 23,
+				"scale": 3
+			}
+		],
+		"typeProperties": {
+			"schema": "ODS",
+			"table": "QualityStaging_Physchem"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

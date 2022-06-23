@@ -1,0 +1,292 @@
+{
+	"name": "PackagingExtractSA",
+	"properties": {
+		"activities": [
+			{
+				"name": "Copy Packaging PAQT Month",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "LookupMapping_SA",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlServerSource",
+						"sqlReaderStoredProcedureName": "[dbo].[DPR_CalcKPIs_PackagingEfficiency_AllSites]",
+						"storedProcedureParameters": {
+							"Duration": {
+								"type": "String",
+								"value": {
+									"value": "Month",
+									"type": "Expression"
+								}
+							},
+							"EndDate": {
+								"type": "DateTime",
+								"value": {
+									"value": "@utcnow()",
+									"type": "Expression"
+								}
+							},
+							"StartDate": {
+								"type": "DateTime",
+								"value": {
+									"value": "@getPastTime(int(pipeline().parameters.PackDateRange), 'Day')",
+									"type": "Expression"
+								}
+							}
+						},
+						"queryTimeout": "10:00:00",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "AzureSqlSink",
+						"preCopyScript": {
+							"value": "TRUNCATE TABLE ODS.PackStaging_SAM",
+							"type": "Expression"
+						},
+						"writeBehavior": "insert",
+						"disableMetricsCollection": false
+					},
+					"enableStaging": false,
+					"enableSkipIncompatibleRow": true,
+					"translator": {
+						"value": "@json(activity('LookupMapping_SA').output.firstRow.json_output)",
+						"type": "Expression"
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "dsPackaging",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "PackLanding_SAM",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "LookupMapping_SA",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderStoredProcedureName": "[REF].[spADF_DynamicColumnMapping]",
+						"storedProcedureParameters": {
+							"schema_name": {
+								"type": "String",
+								"value": "ODS"
+							},
+							"table_name": {
+								"type": "String",
+								"value": "PackStaging"
+							}
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "dsLookupMapping",
+						"type": "DatasetReference"
+					}
+				}
+			},
+			{
+				"name": "Copy Packaging PAQT Week",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "LookupMapping_SA",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlServerSource",
+						"sqlReaderStoredProcedureName": "[dbo].[DPR_CalcKPIs_PackagingEfficiency_AllSites]",
+						"storedProcedureParameters": {
+							"Duration": {
+								"type": "String",
+								"value": {
+									"value": "week",
+									"type": "Expression"
+								}
+							},
+							"EndDate": {
+								"type": "DateTime",
+								"value": {
+									"value": "@utcnow()",
+									"type": "Expression"
+								}
+							},
+							"StartDate": {
+								"type": "DateTime",
+								"value": {
+									"value": "@getPastTime(int(pipeline().parameters.PackDateRange), 'Day')",
+									"type": "Expression"
+								}
+							}
+						},
+						"queryTimeout": "10:00:00",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "AzureSqlSink",
+						"preCopyScript": {
+							"value": "TRUNCATE TABLE ODS.PackStaging_SAW",
+							"type": "Expression"
+						},
+						"writeBehavior": "insert",
+						"disableMetricsCollection": false
+					},
+					"enableStaging": false,
+					"enableSkipIncompatibleRow": true,
+					"translator": {
+						"value": "@json(activity('LookupMapping_SA').output.firstRow.json_output)",
+						"type": "Expression"
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "dsPackaging",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "PackLanding_SAW",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "Copy Packaging PAQT Day",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "LookupMapping_SA",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlServerSource",
+						"sqlReaderStoredProcedureName": "[dbo].[DPR_CalcKPIs_PackagingEfficiency_AllSites]",
+						"storedProcedureParameters": {
+							"Duration": {
+								"type": "String",
+								"value": {
+									"value": "Day",
+									"type": "Expression"
+								}
+							},
+							"EndDate": {
+								"type": "DateTime",
+								"value": {
+									"value": "@utcnow()",
+									"type": "Expression"
+								}
+							},
+							"StartDate": {
+								"type": "DateTime",
+								"value": {
+									"value": "@getPastTime(int(pipeline().parameters.PackDateRange), 'Day')",
+									"type": "Expression"
+								}
+							}
+						},
+						"queryTimeout": "10:00:00",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "AzureSqlSink",
+						"preCopyScript": {
+							"value": "TRUNCATE TABLE ODS.PackStaging_SAD",
+							"type": "Expression"
+						},
+						"writeBehavior": "insert",
+						"disableMetricsCollection": false
+					},
+					"enableStaging": false,
+					"enableSkipIncompatibleRow": true,
+					"translator": {
+						"value": "@json(activity('LookupMapping_SA').output.firstRow.json_output)",
+						"type": "Expression"
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "dsPackaging",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "PackLanding_SAD",
+						"type": "DatasetReference"
+					}
+				]
+			}
+		],
+		"parameters": {
+			"PackDateRange": {
+				"type": "string"
+			}
+		},
+		"variables": {
+			"vDBName": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "Packaging ETL"
+		},
+		"annotations": [],
+		"lastPublishTime": "2021-07-29T09:13:27Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

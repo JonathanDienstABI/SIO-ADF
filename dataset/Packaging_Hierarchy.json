@@ -1,0 +1,88 @@
+{
+	"name": "Packaging_Hierarchy",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "supplydatastore_server",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "Packaging Efficiency ETL"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "fkDate",
+				"type": "date"
+			},
+			{
+				"name": "DateEnding",
+				"type": "datetime",
+				"precision": 23,
+				"scale": 3
+			},
+			{
+				"name": "SiteRef",
+				"type": "varchar"
+			},
+			{
+				"name": "fkSite",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "Timeline",
+				"type": "varchar"
+			},
+			{
+				"name": "fkTimeLine",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "Line",
+				"type": "varchar"
+			},
+			{
+				"name": "fkLocation",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "fkPackLine",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "fkBatch",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "fkHierarchy",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "Value",
+				"type": "float",
+				"precision": 15
+			},
+			{
+				"name": "pkiFactPackagingHierarchy",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "CheckCount",
+				"type": "int",
+				"precision": 10
+			}
+		],
+		"typeProperties": {
+			"schema": "ODS",
+			"table": "vwPackagingETL2_Hierarchies"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

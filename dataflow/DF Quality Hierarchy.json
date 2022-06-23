@@ -1,0 +1,57 @@
+{
+	"name": "DF Quality Hierarchy",
+	"properties": {
+		"folder": {
+			"name": "Quality ETL"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "dsQualityHierarchy",
+						"type": "DatasetReference"
+					},
+					"name": "dsQualityHierarchy"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "dsFactQualityHiearchy",
+						"type": "DatasetReference"
+					},
+					"name": "SinkInsert"
+				},
+				{
+					"dataset": {
+						"referenceName": "dsFactQualityHiearchy",
+						"type": "DatasetReference"
+					},
+					"name": "SinkUpdate"
+				}
+			],
+			"transformations": [
+				{
+					"name": "ConditionalSplit1"
+				},
+				{
+					"name": "FilterNew"
+				},
+				{
+					"name": "Insert"
+				},
+				{
+					"name": "FilterUpdate"
+				},
+				{
+					"name": "Update"
+				},
+				{
+					"name": "InsertSet"
+				}
+			],
+			"script": "source(output(\n\t\tpkiFactQualityHierarchy as long,\n\t\tfkDate as date,\n\t\tfkSite as long,\n\t\tfkLocation as long,\n\t\tfkDomain as integer,\n\t\tfkTimeLine as integer,\n\t\tfkHierarchy as long,\n\t\tOpportunities as double,\n\t\tInSpec as double,\n\t\tPercInSpec as double,\n\t\tfkBatch as long,\n\t\tLastUpdated as timestamp\n\t),\n\tallowSchemaDrift: false,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table') ~> dsQualityHierarchy\ndsQualityHierarchy split(isNull(pkiFactQualityHierarchy),\n\tdisjoint: false) ~> ConditionalSplit1@(NewrRecords, UpdateRecords)\nConditionalSplit1@NewrRecords filter(isNull(pkiFactQualityHierarchy)) ~> FilterNew\nInsertSet alterRow(insertIf(true())) ~> Insert\nConditionalSplit1@UpdateRecords filter(!isNull(pkiFactQualityHierarchy)) ~> FilterUpdate\nFilterUpdate alterRow(updateIf(true())) ~> Update\nFilterNew select(mapColumn(\n\t\tfkDate,\n\t\tfkSite,\n\t\tfkLocation,\n\t\tfkDomain,\n\t\tfkTimeLine,\n\t\tfkHierarchy,\n\t\tOpportunities,\n\t\tInSpec,\n\t\tPercInSpec,\n\t\tfkBatch,\n\t\tLastUpdated\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> InsertSet\nInsert sink(allowSchemaDrift: false,\n\tvalidateSchema: false,\n\tinput(\n\t\tpkiFactQualityHierarchy as long,\n\t\tfkDate as date,\n\t\tfkSite as long,\n\t\tfkLocation as long,\n\t\tfkDomain as integer,\n\t\tfkTimeLine as integer,\n\t\tfkHierarchy as long,\n\t\tOpportunities as double,\n\t\tInSpec as double,\n\t\tPercInSpec as double,\n\t\tfkBatch as long,\n\t\tLastUpdated as timestamp\n\t),\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\tformat: 'table',\n\terrorHandlingOption: 'stopOnFirstError',\n\tmapColumn(\n\t\tfkDate,\n\t\tfkSite,\n\t\tfkLocation,\n\t\tfkDomain,\n\t\tfkTimeLine,\n\t\tfkHierarchy,\n\t\tOpportunities,\n\t\tInSpec,\n\t\tPercInSpec,\n\t\tfkBatch,\n\t\tLastUpdated\n\t)) ~> SinkInsert\nUpdate sink(allowSchemaDrift: false,\n\tvalidateSchema: false,\n\tinput(\n\t\tpkiFactQualityHierarchy as long,\n\t\tfkDate as date,\n\t\tfkSite as long,\n\t\tfkLocation as long,\n\t\tfkDomain as integer,\n\t\tfkTimeLine as integer,\n\t\tfkHierarchy as long,\n\t\tOpportunities as double,\n\t\tInSpec as double,\n\t\tPercInSpec as double,\n\t\tfkBatch as long,\n\t\tLastUpdated as timestamp\n\t),\n\tdeletable:false,\n\tinsertable:false,\n\tupdateable:true,\n\tupsertable:false,\n\tkeys:['pkiFactQualityHierarchy'],\n\tskipKeyWrites:true,\n\tformat: 'table',\n\terrorHandlingOption: 'stopOnFirstError',\n\tmapColumn(\n\t\tpkiFactQualityHierarchy,\n\t\tfkDate,\n\t\tfkSite,\n\t\tfkLocation,\n\t\tfkDomain,\n\t\tfkTimeLine,\n\t\tfkHierarchy,\n\t\tOpportunities,\n\t\tInSpec,\n\t\tPercInSpec,\n\t\tfkBatch,\n\t\tLastUpdated\n\t)) ~> SinkUpdate"
+		}
+	}
+}

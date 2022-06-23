@@ -1,0 +1,58 @@
+{
+	"name": "DF-Packaging Hierarchy ETL2",
+	"properties": {
+		"folder": {
+			"name": "Packaging ETL"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "Packaging_Hierarchy",
+						"type": "DatasetReference"
+					},
+					"name": "Source",
+					"description": "Import data from Packaging Staging"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "DWFactPackagingHierarchy",
+						"type": "DatasetReference"
+					},
+					"name": "InsertSink"
+				},
+				{
+					"dataset": {
+						"referenceName": "DWFactPackagingHierarchy",
+						"type": "DatasetReference"
+					},
+					"name": "UpdateSink"
+				}
+			],
+			"transformations": [
+				{
+					"name": "Select1"
+				},
+				{
+					"name": "GetUpdateTime"
+				},
+				{
+					"name": "InsertRow"
+				},
+				{
+					"name": "UpdateRow"
+				},
+				{
+					"name": "FilterInsert"
+				},
+				{
+					"name": "FilterUpdate"
+				}
+			],
+			"script": "source(output(\n\t\tfkDate as date,\n\t\tDateEnding as timestamp,\n\t\tSiteRef as string,\n\t\tfkSite as long,\n\t\tTimeline as string,\n\t\tfkTimeLine as integer,\n\t\tLine as string,\n\t\tfkLocation as long,\n\t\tfkPackLine as long,\n\t\tfkBatch as long,\n\t\tfkHierarchy as long,\n\t\tValue as double,\n\t\tpkiFactPackagingHierarchy as long,\n\t\tCheckCount as integer\n\t),\n\tallowSchemaDrift: false,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table') ~> Source\nSource select(mapColumn(\n\t\tfkDate,\n\t\tfkSite,\n\t\tfkTimeLine,\n\t\tfkLocation,\n\t\tfkPackLine,\n\t\tfkBatch,\n\t\tfkHierarchy,\n\t\tValue,\n\t\tpkiFactPackagingHierarchy\n\t),\n\tskipDuplicateMapInputs: false,\n\tskipDuplicateMapOutputs: false) ~> Select1\nSelect1 derive(LastUpdated = currentTimestamp(),\n\t\tfkDomain = toInteger(2)) ~> GetUpdateTime\nFilterInsert alterRow(insertIf(isNull(pkiFactPackagingHierarchy))) ~> InsertRow\nFilterUpdate alterRow(updateIf(!isNull(pkiFactPackagingHierarchy))) ~> UpdateRow\nGetUpdateTime filter(isNull(pkiFactPackagingHierarchy)) ~> FilterInsert\nGetUpdateTime filter(!isNull(pkiFactPackagingHierarchy)) ~> FilterUpdate\nInsertRow sink(allowSchemaDrift: false,\n\tvalidateSchema: false,\n\tinput(\n\t\tpkiFactPackagingHierarchy as long,\n\t\tfkDate as date,\n\t\tfkSite as long,\n\t\tfkLocation as long,\n\t\tfkPackLine as long,\n\t\tfkDomain as integer,\n\t\tfkTimeLine as integer,\n\t\tfkHierarchy as long,\n\t\tValue as double,\n\t\tfkBatch as long,\n\t\tLastUpdated as timestamp\n\t),\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\tformat: 'table',\n\terrorHandlingOption: 'stopOnFirstError',\n\tmapColumn(\n\t\tfkDate,\n\t\tfkSite,\n\t\tfkLocation,\n\t\tfkPackLine,\n\t\tfkDomain,\n\t\tfkTimeLine,\n\t\tfkHierarchy,\n\t\tValue,\n\t\tfkBatch,\n\t\tLastUpdated\n\t)) ~> InsertSink\nUpdateRow sink(allowSchemaDrift: false,\n\tvalidateSchema: false,\n\tinput(\n\t\tpkiFactPackagingHierarchy as long,\n\t\tfkDate as date,\n\t\tfkSite as long,\n\t\tfkLocation as long,\n\t\tfkPackLine as long,\n\t\tfkDomain as integer,\n\t\tfkTimeLine as integer,\n\t\tfkHierarchy as long,\n\t\tValue as double,\n\t\tfkBatch as long,\n\t\tLastUpdated as timestamp\n\t),\n\tdeletable:false,\n\tinsertable:false,\n\tupdateable:true,\n\tupsertable:false,\n\tkeys:['pkiFactPackagingHierarchy'],\n\tskipKeyWrites:true,\n\tformat: 'table',\n\terrorHandlingOption: 'stopOnFirstError',\n\tmapColumn(\n\t\tpkiFactPackagingHierarchy,\n\t\tfkDate,\n\t\tfkSite,\n\t\tfkLocation,\n\t\tfkPackLine,\n\t\tfkDomain,\n\t\tfkTimeLine,\n\t\tfkHierarchy,\n\t\tValue,\n\t\tfkBatch,\n\t\tLastUpdated\n\t)) ~> UpdateSink"
+		}
+	}
+}

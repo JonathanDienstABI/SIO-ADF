@@ -1,0 +1,16 @@
+{
+	"name": "dsPackaging",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_Packaging",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "Packaging Efficiency ETL"
+		},
+		"annotations": [],
+		"type": "SqlServerTable",
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

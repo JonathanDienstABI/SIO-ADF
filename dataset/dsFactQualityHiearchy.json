@@ -1,0 +1,81 @@
+{
+	"name": "dsFactQualityHiearchy",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "supplydatastore_server",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "Quality ETL"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "pkiFactQualityHierarchy",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "fkDate",
+				"type": "date"
+			},
+			{
+				"name": "fkSite",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "fkLocation",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "fkDomain",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "fkTimeLine",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "fkHierarchy",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "Opportunities",
+				"type": "float",
+				"precision": 15
+			},
+			{
+				"name": "InSpec",
+				"type": "float",
+				"precision": 15
+			},
+			{
+				"name": "PercInSpec",
+				"type": "float",
+				"precision": 15
+			},
+			{
+				"name": "fkBatch",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "LastUpdated",
+				"type": "datetime",
+				"precision": 23,
+				"scale": 3
+			}
+		],
+		"typeProperties": {
+			"schema": "DW",
+			"table": "FactQualityHierarchy"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

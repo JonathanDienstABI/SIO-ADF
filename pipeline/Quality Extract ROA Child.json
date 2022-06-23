@@ -1,0 +1,331 @@
+{
+	"name": "Quality Extract ROA Child",
+	"properties": {
+		"description": "Child pipeline for loop in ROA extract ",
+		"activities": [
+			{
+				"name": "LookupMapping_ROA_BCI",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderStoredProcedureName": "[REF].[spADF_DynamicColumnMapping]",
+						"storedProcedureParameters": {
+							"schema_name": {
+								"type": "String",
+								"value": "ROA"
+							},
+							"table_name": {
+								"type": "String",
+								"value": "BCI"
+							}
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "dsLookupMapping",
+						"type": "DatasetReference"
+					}
+				}
+			},
+			{
+				"name": "Update MMIS SiteRef BCI",
+				"description": "Deduplicate site ref across MMIS instances",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "Copy ROA Data BCI",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "ODS.spUpdateMMIS_SiteRef",
+					"storedProcedureParameters": {
+						"dbName": {
+							"value": {
+								"value": "@pipeline().parameters.DBName",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"target": {
+							"value": {
+								"value": "ODS.QualityStaging_BCI",
+								"type": "Expression"
+							},
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "supplydatastore_server",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "LookupMapping_ROA_Phys",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderStoredProcedureName": "[REF].[spADF_DynamicColumnMapping]",
+						"storedProcedureParameters": {
+							"schema_name": {
+								"type": "String",
+								"value": "ROA"
+							},
+							"table_name": {
+								"type": "String",
+								"value": "Physchem"
+							}
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "dsLookupMapping",
+						"type": "DatasetReference"
+					}
+				}
+			},
+			{
+				"name": "Update MMIS SiteRef Phys",
+				"description": "Deduplicate site ref across MMIS instances",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "Copy ROA Data Phys",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "ODS.spUpdateMMIS_SiteRef",
+					"storedProcedureParameters": {
+						"dbName": {
+							"value": {
+								"value": "@pipeline().parameters.DBName",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"target": {
+							"value": {
+								"value": "ODS.QualityStaging_Physchem",
+								"type": "Expression"
+							},
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "supplydatastore_server",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "Copy ROA Data BCI",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "LookupMapping_ROA_BCI",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlServerSource",
+						"sqlReaderStoredProcedureName": "dbo.cc_CQI_BCI",
+						"storedProcedureParameters": {
+							"DATEFROM": {
+								"type": "DateTime",
+								"value": {
+									"value": "@getPastTime(int(pipeline().parameters.ExtractDateRange),'Day')",
+									"type": "Expression"
+								}
+							},
+							"DATETO": {
+								"type": "DateTime",
+								"value": {
+									"value": "@utcnow()",
+									"type": "Expression"
+								}
+							},
+							"site": {
+								"type": "Int32",
+								"value": null
+							},
+							"runasreport": {
+								"type": "Boolean",
+								"value": null
+							}
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "AzureSqlSink",
+						"writeBehavior": "insert"
+					},
+					"enableStaging": false,
+					"enableSkipIncompatibleRow": true,
+					"translator": {
+						"value": "@json(activity('LookupMapping_ROA_BCI').output.firstRow.json_output)",
+						"type": "Expression"
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "DS_MMIS_ROA_Dynamic",
+						"type": "DatasetReference",
+						"parameters": {
+							"pDBName": {
+								"value": "@pipeline().parameters.DBName",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "rsQuality_BCI_ROA",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "Copy ROA Data Phys",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "LookupMapping_ROA_Phys",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlServerSource",
+						"sqlReaderStoredProcedureName": "dbo.cc_CQI_PhysChem",
+						"storedProcedureParameters": {
+							"DATEFROM": {
+								"type": "DateTime",
+								"value": {
+									"value": "@getPastTime(int(pipeline().parameters.ExtractDateRange),'Day')",
+									"type": "Expression"
+								}
+							},
+							"DATETO": {
+								"type": "DateTime",
+								"value": {
+									"value": "@utcnow()",
+									"type": "Expression"
+								}
+							}
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "AzureSqlSink",
+						"writeBehavior": "insert"
+					},
+					"enableStaging": false,
+					"translator": {
+						"value": "@json(activity('LookupMapping_ROA_Phys').output.firstRow.json_output)",
+						"type": "Expression"
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "DS_MMIS_ROA_Dynamic",
+						"type": "DatasetReference",
+						"parameters": {
+							"pDBName": {
+								"value": "@pipeline().parameters.DBName",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "rsQuality_Phys_ROA",
+						"type": "DatasetReference"
+					}
+				]
+			}
+		],
+		"parameters": {
+			"DBName": {
+				"type": "string"
+			},
+			"ExtractDateRange": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "Quality ETL"
+		},
+		"annotations": [],
+		"lastPublishTime": "2021-07-29T09:13:28Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

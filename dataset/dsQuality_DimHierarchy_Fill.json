@@ -1,0 +1,59 @@
+{
+	"name": "dsQuality_DimHierarchy_Fill",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "supplydatastore_server",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "Quality ETL"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "HierarchyClass",
+				"type": "char"
+			},
+			{
+				"name": "DEPARTMENT",
+				"type": "varchar"
+			},
+			{
+				"name": "PROCESS_AREA",
+				"type": "varchar"
+			},
+			{
+				"name": "PARAMETER",
+				"type": "varchar"
+			},
+			{
+				"name": "Level1",
+				"type": "varchar"
+			},
+			{
+				"name": "Level2",
+				"type": "varchar"
+			},
+			{
+				"name": "Level3",
+				"type": "varchar"
+			},
+			{
+				"name": "fkDomain",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "pkiHierarchy",
+				"type": "bigint",
+				"precision": 19
+			}
+		],
+		"typeProperties": {
+			"schema": "ODS",
+			"table": "vwQualityHierarchy"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

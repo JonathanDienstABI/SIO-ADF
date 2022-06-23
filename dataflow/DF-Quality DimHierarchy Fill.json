@@ -1,0 +1,41 @@
+{
+	"name": "DF-Quality DimHierarchy Fill",
+	"properties": {
+		"folder": {
+			"name": "Quality ETL"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "dsQuality_DimHierarchy_Fill",
+						"type": "DatasetReference"
+					},
+					"name": "QuaityHierarchySource"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "DimHierarchy",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
+			"transformations": [
+				{
+					"name": "Select1"
+				},
+				{
+					"name": "SetInsert"
+				},
+				{
+					"name": "CreatedDate"
+				}
+			],
+			"script": "source(output(\n\t\tHierarchyClass as string,\n\t\tDEPARTMENT as string,\n\t\tPROCESS_AREA as string,\n\t\tPARAMETER as string,\n\t\tLevel1 as string,\n\t\tLevel2 as string,\n\t\tLevel3 as string,\n\t\tfkDomain as integer,\n\t\tpkiHierarchy as long\n\t),\n\tallowSchemaDrift: false,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table') ~> QuaityHierarchySource\nQuaityHierarchySource select(mapColumn(\n\t\tHierarchyClass,\n\t\tLevel1,\n\t\tLevel2,\n\t\tLevel3,\n\t\tfkDomain\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> Select1\nCreatedDate alterRow(insertIf(true())) ~> SetInsert\nSelect1 derive(CreatedDate = currentUTC()) ~> CreatedDate\nSetInsert sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tinput(\n\t\tpkiHierarchy as long,\n\t\tfkDomain as long,\n\t\tHierarchyClass as string,\n\t\tLevel1 as string,\n\t\tLevel2 as string,\n\t\tLevel3 as string,\n\t\tLevel4 as string,\n\t\tCreatedDate as timestamp\n\t),\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\tformat: 'table',\n\terrorHandlingOption: 'stopOnFirstError',\n\tmapColumn(\n\t\tfkDomain,\n\t\tHierarchyClass,\n\t\tLevel1,\n\t\tLevel2,\n\t\tLevel3,\n\t\tCreatedDate\n\t)) ~> sink1"
+		}
+	}
+}

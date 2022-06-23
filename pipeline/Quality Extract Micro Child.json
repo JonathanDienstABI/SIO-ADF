@@ -1,0 +1,176 @@
+{
+	"name": "Quality Extract Micro Child",
+	"properties": {
+		"description": "Child pipeline for looping in MMIS_*",
+		"activities": [
+			{
+				"name": "LookupMapping_Micro",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderStoredProcedureName": "[REF].[spADF_DynamicColumnMapping]",
+						"storedProcedureParameters": {
+							"schema_name": {
+								"type": "String",
+								"value": "ODS"
+							},
+							"table_name": {
+								"type": "String",
+								"value": "Micro"
+							}
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "dsLookupMapping",
+						"type": "DatasetReference"
+					}
+				}
+			},
+			{
+				"name": "Update MMIS SiteRef Micro",
+				"description": "Deduplicate site ref across MMIS instances",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [
+					{
+						"activity": "Copy Micro Data",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "ODS.spUpdateMMIS_SiteRef",
+					"storedProcedureParameters": {
+						"dbName": {
+							"value": {
+								"value": "@pipeline().parameters.DBName",
+								"type": "Expression"
+							},
+							"type": "String"
+						},
+						"target": {
+							"value": {
+								"value": "ODS.QualityStaging_Micro",
+								"type": "Expression"
+							},
+							"type": "String"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "supplydatastore_server",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "Copy Micro Data",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "LookupMapping_Micro",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlServerSource",
+						"sqlReaderStoredProcedureName": "dbo.cc_Micro_KPIReport",
+						"storedProcedureParameters": {
+							"ENDDATE": {
+								"type": "DateTime",
+								"value": {
+									"value": "@utcnow()",
+									"type": "Expression"
+								}
+							},
+							"SITEREF": {
+								"type": "Int32",
+								"value": null
+							},
+							"STARTDATE": {
+								"type": "DateTime",
+								"value": {
+									"value": "@getPastTime(int(pipeline().parameters.ExtractDateRange),'Day')",
+									"type": "Expression"
+								}
+							}
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "AzureSqlSink",
+						"writeBehavior": "insert"
+					},
+					"enableStaging": false,
+					"translator": {
+						"value": "@json(activity('LookupMapping_Micro').output.firstRow.json_output)",
+						"type": "Expression"
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "DS_MMIS_ROA_Dynamic",
+						"type": "DatasetReference",
+						"parameters": {
+							"pDBName": {
+								"value": "@pipeline().parameters.DBName",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "rsQuality_Micro",
+						"type": "DatasetReference"
+					}
+				]
+			}
+		],
+		"parameters": {
+			"DBName": {
+				"type": "string"
+			},
+			"ExtractDateRange": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "Quality ETL"
+		},
+		"annotations": [],
+		"lastPublishTime": "2021-07-29T09:13:28Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

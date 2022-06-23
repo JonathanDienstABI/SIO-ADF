@@ -1,0 +1,237 @@
+{
+	"name": "Quality Extract Traksys Child",
+	"properties": {
+		"description": "Child pipeline for loop in ROA extract ",
+		"activities": [
+			{
+				"name": "Lookup Mapping Traksys Phys",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderStoredProcedureName": "[REF].[spADF_DynamicColumnMapping]",
+						"storedProcedureParameters": {
+							"schema_name": {
+								"type": "String",
+								"value": "TRX"
+							},
+							"table_name": {
+								"type": "String",
+								"value": "Physchem"
+							}
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "dsLookupMapping",
+						"type": "DatasetReference"
+					}
+				}
+			},
+			{
+				"name": "Copy BCI Traksys",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Lookup Mapping Traksys BCI",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlServerSource",
+						"sqlReaderStoredProcedureName": "[dbo].[BCI]",
+						"storedProcedureParameters": {
+							"ENDDATE": {
+								"type": "DateTime",
+								"value": {
+									"value": "@utcnow()",
+									"type": "Expression"
+								}
+							},
+							"SITEID": {
+								"type": "String",
+								"value": {
+									"value": "@pipeline().parameters.SiteCode",
+									"type": "Expression"
+								}
+							},
+							"STARTDATE": {
+								"type": "DateTime",
+								"value": {
+									"value": "@getPastTime(int(pipeline().parameters.ExtractDateRange),'Day')",
+									"type": "Expression"
+								}
+							}
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "AzureSqlSink",
+						"writeBehavior": "insert"
+					},
+					"enableStaging": false,
+					"translator": {
+						"value": "@json(activity('Lookup Mapping Traksys BCI').output.firstRow.json_output)",
+						"type": "Expression"
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "rsQuality_Traksys",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "rsQualitySink_BCI",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "Copy Physchem Traksys",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Lookup Mapping Traksys Phys",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "SqlServerSource",
+						"sqlReaderStoredProcedureName": "[dbo].[Physchem_Index]",
+						"storedProcedureParameters": {
+							"ENDDATE": {
+								"type": "DateTime",
+								"value": {
+									"value": "@utcnow()",
+									"type": "Expression"
+								}
+							},
+							"SiteID": {
+								"type": "String",
+								"value": {
+									"value": "@pipeline().parameters.SiteCode",
+									"type": "Expression"
+								}
+							},
+							"STARTDATE": {
+								"type": "DateTime",
+								"value": {
+									"value": "@getPastTime(int(pipeline().parameters.ExtractDateRange),'Day')",
+									"type": "Expression"
+								}
+							}
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "AzureSqlSink",
+						"writeBehavior": "insert"
+					},
+					"enableStaging": false,
+					"translator": {
+						"value": "@json(activity('Lookup Mapping Traksys Phys').output.firstRow.json_output)",
+						"type": "Expression"
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "rsQuality_Traksys",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "rsQualitySink_Phys",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "Lookup Mapping Traksys BCI",
+				"description": "Bug in BCI produces PROCESSAREA instead of PROCESS_AREA",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderStoredProcedureName": "[REF].[spADF_DynamicColumnMapping]",
+						"storedProcedureParameters": {
+							"schema_name": {
+								"type": "String",
+								"value": "TRX"
+							},
+							"table_name": {
+								"type": "String",
+								"value": "BCI"
+							}
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "dsLookupMapping",
+						"type": "DatasetReference"
+					}
+				}
+			}
+		],
+		"parameters": {
+			"SiteCode": {
+				"type": "string"
+			},
+			"ExtractDateRange": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "Quality ETL"
+		},
+		"annotations": [],
+		"lastPublishTime": "2021-07-29T09:13:28Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

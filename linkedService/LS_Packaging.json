@@ -1,0 +1,15 @@
+{
+	"name": "LS_Packaging",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "SqlServer",
+		"typeProperties": {
+			"connectionString": "integrated security=False;data source=DIVSS683.beerdivision.africa.gcn.local;initial catalog=RHub;user id=plnuser"
+		},
+		"connectVia": {
+			"referenceName": "OnPremise",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

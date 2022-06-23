@@ -1,0 +1,58 @@
+{
+	"name": "DF-Packaging DimHierarchy Fill",
+	"properties": {
+		"description": "Populate junk dimension",
+		"folder": {
+			"name": "Packaging ETL"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "PackagingDimHierarchy_Staging",
+						"type": "DatasetReference"
+					},
+					"name": "StagingLoad"
+				},
+				{
+					"dataset": {
+						"referenceName": "DimHierarchy",
+						"type": "DatasetReference"
+					},
+					"name": "DimLoad"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "DimHierarchy",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
+			"transformations": [
+				{
+					"name": "Join1"
+				},
+				{
+					"name": "Select1"
+				},
+				{
+					"name": "AlterRow1"
+				},
+				{
+					"name": "Select2"
+				},
+				{
+					"name": "DerivedColumn1"
+				},
+				{
+					"name": "Filter1"
+				}
+			],
+			"script": "source(output(\n\t\tfkDomain as long,\n\t\tfkBatch as long,\n\t\tHierarchyClass as string,\n\t\tLevel1 as string,\n\t\tLevel2 as string,\n\t\tLevel3 as string\n\t),\n\tallowSchemaDrift: false,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tprocedureName: 'spPackHierarchyCombinations',\n\tschemaName: 'ODS',\n\tresultSet: true,\n\tformat: 'procedure') ~> StagingLoad\nsource(output(\n\t\tpkiHierarchy as long,\n\t\tfkDomain as long,\n\t\tHierarchyClass as string,\n\t\tLevel1 as string,\n\t\tLevel2 as string,\n\t\tLevel3 as string,\n\t\tLevel4 as string,\n\t\tCreatedDate as timestamp\n\t),\n\tallowSchemaDrift: false,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table') ~> DimLoad\nStagingLoad, DimLoad join(StagingLoad@Level1 == DimLoad@Level1\n\t&& StagingLoad@Level2 == DimLoad@Level2\n\t&& StagingLoad@Level3 === DimLoad@Level3,\n\tjoinType:'left',\n\tmatchType:'exact',\n\tignoreSpaces: false,\n\tbroadcast: 'auto')~> Join1\nJoin1 select(mapColumn(\n\t\tpkiHierarchy,\n\t\tfkDomain = StagingLoad@fkDomain,\n\t\tHierarchyClass = StagingLoad@HierarchyClass,\n\t\tLevel1 = StagingLoad@Level1,\n\t\tLevel2 = StagingLoad@Level2,\n\t\tLevel3 = StagingLoad@Level3\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> Select1\nFilter1 alterRow(insertIf(isNull(pkiHierarchy))) ~> AlterRow1\nAlterRow1 select(mapColumn(\n\t\tfkDomain,\n\t\tHierarchyClass,\n\t\tLevel1,\n\t\tLevel2,\n\t\tLevel3,\n\t\tCreatedDate = UpdateDate\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> Select2\nSelect1 derive(UpdateDate = currentTimestamp()) ~> DerivedColumn1\nDerivedColumn1 filter(isNull(pkiHierarchy)) ~> Filter1\nSelect2 sink(allowSchemaDrift: false,\n\tvalidateSchema: false,\n\tinput(\n\t\tpkiHierarchy as long,\n\t\tfkDomain as long,\n\t\tHierarchyClass as string,\n\t\tLevel1 as string,\n\t\tLevel2 as string,\n\t\tLevel3 as string,\n\t\tLevel4 as string,\n\t\tCreatedDate as timestamp\n\t),\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\tformat: 'table',\n\terrorHandlingOption: 'stopOnFirstError',\n\tmapColumn(\n\t\tfkDomain,\n\t\tHierarchyClass,\n\t\tLevel1,\n\t\tLevel2,\n\t\tLevel3,\n\t\tCreatedDate\n\t)) ~> sink1"
+		}
+	}
+}

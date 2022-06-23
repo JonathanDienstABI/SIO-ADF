@@ -1,0 +1,57 @@
+{
+	"name": "DimHierarchy",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "supplydatastore_server",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "Generic Datasets"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "pkiHierarchy",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "fkDomain",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "HierarchyClass",
+				"type": "varchar"
+			},
+			{
+				"name": "Level1",
+				"type": "varchar"
+			},
+			{
+				"name": "Level2",
+				"type": "varchar"
+			},
+			{
+				"name": "Level3",
+				"type": "varchar"
+			},
+			{
+				"name": "Level4",
+				"type": "varchar"
+			},
+			{
+				"name": "CreatedDate",
+				"type": "datetime",
+				"precision": 23,
+				"scale": 3
+			}
+		],
+		"typeProperties": {
+			"schema": "DW",
+			"table": "DimHierarchy"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

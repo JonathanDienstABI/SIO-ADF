@@ -1,0 +1,41 @@
+{
+	"name": "DF-Packaging ETL2",
+	"properties": {
+		"folder": {
+			"name": "Packaging ETL"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "PackagingStaging_KPI",
+						"type": "DatasetReference"
+					},
+					"name": "PackStaging"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "DWFactKPI",
+						"type": "DatasetReference"
+					},
+					"name": "InsertFact"
+				}
+			],
+			"transformations": [
+				{
+					"name": "Select1"
+				},
+				{
+					"name": "MarkInsert"
+				},
+				{
+					"name": "ComputeDefaults"
+				}
+			],
+			"script": "source(output(\n\t\tfkDate as date,\n\t\tDateEnding as timestamp,\n\t\tSiteRef as string,\n\t\tfkSite as long,\n\t\tTimeline as string,\n\t\tfkTimeLine as integer,\n\t\tMetricName as string,\n\t\tfkMetric as long,\n\t\tLine as string,\n\t\tfkLocation as long,\n\t\tfkPackLine as long,\n\t\tfkBatch as long,\n\t\tValue as double,\n\t\tpkiFactKPI as long,\n\t\tCheckCount as integer\n\t),\n\tallowSchemaDrift: false,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table') ~> PackStaging\nPackStaging select(mapColumn(\n\t\tfkDate,\n\t\tfkSite,\n\t\tfkTimeLine,\n\t\tfkMetric,\n\t\tfkLocation,\n\t\tfkPackLine,\n\t\tfkBatch,\n\t\tValue,\n\t\tpkiFactKPI\n\t),\n\tskipDuplicateMapInputs: false,\n\tskipDuplicateMapOutputs: false) ~> Select1\nComputeDefaults alterRow(insertIf(isNull(pkiFactKPI)),\n\tupdateIf(isNull(pkiFactKPI)==false())) ~> MarkInsert\nSelect1 derive(LastUpdated = currentTimestamp(),\n\t\tfkDomain = 2,\n\t\tWeightFactor = toDouble(0),\n\t\tDisable = false()) ~> ComputeDefaults\nMarkInsert sink(allowSchemaDrift: false,\n\tvalidateSchema: false,\n\tinput(\n\t\tpkiFactKPI as long,\n\t\tfkDate as date,\n\t\tfkSite as long,\n\t\tfkLocation as long,\n\t\tfkPackLine as long,\n\t\tfkBrewhouse as long,\n\t\tfkMetric as long,\n\t\tfkDomain as integer,\n\t\tfkTimeLine as integer,\n\t\tValue as double,\n\t\tWeightingFactor as double,\n\t\tTarget as double,\n\t\tTargetWeightingFactor as double,\n\t\tSourceLine as long,\n\t\tfkBatch as long,\n\t\tLastUpdated as timestamp,\n\t\tDisable as boolean\n\t),\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:true,\n\tupsertable:false,\n\tkeys:['pkiFactKPI'],\n\tskipKeyWrites:true,\n\tformat: 'table',\n\terrorHandlingOption: 'stopOnFirstError',\n\tmapColumn(\n\t\tpkiFactKPI,\n\t\tfkDate,\n\t\tfkSite,\n\t\tfkLocation,\n\t\tfkPackLine,\n\t\tfkMetric,\n\t\tfkDomain,\n\t\tfkTimeLine,\n\t\tValue,\n\t\tWeightingFactor = WeightFactor,\n\t\tfkBatch,\n\t\tLastUpdated,\n\t\tDisable\n\t)) ~> InsertFact"
+		}
+	}
+}
